@@ -1,0 +1,21 @@
+{
+  "name": "sample",
+  "description": "Empty template for custom site configuration",
+  "selectors": {
+    "chapters": "",
+    "chapterNumber": "",
+    "chapterTitle": "",
+    "image": "",
+    "subtitle": "",
+    "text": "",
+    "textContainer": ""
+  },
+  "patterns": {
+    "chapterNumberRegex": "",
+    "imageUrlPattern": ""
+  },
+  "pagination": {
+    "nextPage": "",
+    "maxPages": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "wp-manga",
+  "description": "Template for WordPress Manga sites using WP-Manga plugin",
+  "selectors": {
+    "chapters": ".wp-manga-chapter a",
+    "chapterNumber": ".chapter-title",
+    "chapterTitle": ".chapter-title",
+    "image": "img.wp-manga-chapter-img, .reading-content img",
+    "textContainer": ".text-content"
+  },
+  "patterns": {
+    "chapterNumberRegex": "chapter[_\\s-]*(\\d+(?:\\.\\d+)?)",
+    "imageUrlPattern": "\\.(jpg|jpeg|png|webp|gif)$"
+  },
+  "pagination": {
+    "nextPage": ".nav-next a",
+    "maxPages": 1
+  }
+}

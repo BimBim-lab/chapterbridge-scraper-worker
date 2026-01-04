@@ -1,0 +1,42 @@
+{
+  "name": "scraper-worker",
+  "version": "1.0.0",
+  "description": "Automated scraping worker for ChapterBridge Dashboard",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "scraper-worker": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "scraper",
+    "cli",
+    "supabase",
+    "cloudflare-r2"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.540.0",
+    "@supabase/supabase-js": "^2.42.0",
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.5",
+    "pino": "^8.19.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
