@@ -426,8 +426,9 @@ async function downloadSubtitleForSegment(
   }
 }
 
+let jobId: string | null = null;
+
 async function main() {
-  let jobId: string | null = null;
   
   try {
     const args = parseArguments();
@@ -554,4 +555,23 @@ async function main() {
   }
 }
 
-main();
+main().catch(async (error) => {
+  console.error('❌ Fatal error:', error);
+  
+  // Update job status to failed if job was created
+  if (jobId) {
+    try {
+      await updateJobStatus(
+        jobId, 
+        'failed', 
+        undefined, 
+        error instanceof Error ? error.message : 'Unknown fatal error'
+      );
+      console.log('✅ Job status updated to failed');
+    } catch (updateError) {
+      console.error('⚠️  Failed to update job status:', updateError);
+    }
+  }
+  
+  process.exit(1);
+});
