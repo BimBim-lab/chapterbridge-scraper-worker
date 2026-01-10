@@ -1,0 +1,11 @@
+{
+  "name": "opensubtitles",
+  "description": "OpenSubtitles.com subtitle scraper for anime/tv shows",
+  "selectors": {
+    "subtitle": "a.download-link, .subtitle-download a",
+    "text": ""
+  },
+  "patterns": {
+    "imageUrlPattern": ""
+  }
+}

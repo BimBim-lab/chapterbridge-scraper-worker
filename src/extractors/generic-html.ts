@@ -8,19 +8,84 @@ import { logger } from '../utils/logger.js';
 export class GenericHtmlExtractor implements Extractor {
   name = 'generic-html';
 
-  private async fetchPage(url: string): Promise<cheerio.CheerioAPI> {
+  private userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+  ];
+
+  private getRandomUserAgent(): string {
+    return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
+  }
+
+  private async randomDelay(min: number = 2000, max: number = 5000): Promise<void> {
+    const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+
+  private async fetchPage(url: string, retries: number = 3): Promise<cheerio.CheerioAPI> {
     const env = getEnv();
     
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': env.USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      timeout: 30000,
-    });
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        // Random delay between requests
+        if (attempt > 0) {
+          const backoffDelay = Math.min(1000 * Math.pow(2, attempt), 10000);
+          logger.info({ attempt: attempt + 1, delay: backoffDelay }, 'Retrying after delay');
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        } else {
+          await this.randomDelay(1500, 3500);
+        }
+        
+        const response = await axios.get(url, {
+          headers: {
+            'User-Agent': this.getRandomUserAgent(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+            'DNT': '1',
+          },
+          timeout: 45000,
+          maxRedirects: 5,
+          validateStatus: (status) => status < 500, // Don't throw on 4xx
+        });
 
-    return cheerio.load(response.data);
+        if (response.status === 429) {
+          logger.warn({ attempt: attempt + 1 }, 'Rate limited, will retry');
+          continue;
+        }
+
+        if (response.status >= 400) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        logger.info({ url, attempt: attempt + 1 }, 'Successfully fetched page');
+        return cheerio.load(response.data);
+      } catch (error) {
+        const isLastAttempt = attempt === retries - 1;
+        logger.error({ 
+          error: error instanceof Error ? error.message : String(error), 
+          attempt: attempt + 1, 
+          retries,
+          url 
+        }, isLastAttempt ? 'Failed to fetch page after all retries' : 'Failed to fetch page, will retry');
+        
+        if (isLastAttempt) {
+          throw error;
+        }
+      }
+    }
+
+    throw new Error('Failed to fetch page after all retries');
   }
 
   async scrapeWork(url: string, config: TemplateConfig): Promise<WorkExtractResult> {

@@ -1,0 +1,23 @@
+{
+  "name": "manhwaz",
+  "description": "Template for manhwaz.com - WordPress based manga/webtoon site",
+  "selectors": {
+    "chapters": ".wp-manga-chapter a",
+    "chapterNumber": ".wp-manga-chapter a",
+    "chapterTitle": ".wp-manga-chapter a",
+    "image": ".reading-content img, .page-break img, img.wp-manga-chapter-img",
+    "textContainer": ".reading-content, .text-content",
+    "chapterList": ".list-chapter ul.list-item li.wp-manga-chapter",
+    "chapterUrl": "a[href]",
+    "chapterViews": ".number-view",
+    "chapterDate": ".chapter-release-date i"
+  },
+  "patterns": {
+    "chapterNumberRegex": "chapter[_\\s-]*(\\d+(?:\\.\\d+)?)",
+    "imageUrlPattern": "\\.(jpg|jpeg|png|webp|gif)$"
+  },
+  "pagination": {
+    "nextPage": ".nav-next a, .nextpostslink",
+    "maxPages": 1
+  }
+}

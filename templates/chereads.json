@@ -1,0 +1,33 @@
+{
+  "name": "Chereads Novel",
+  "description": "Template for scraping novels from chereads.com",
+  "template_type": "custom_html",
+  "version": "1.0.0",
+  "config": {
+    "baseUrl": "https://www.chereads.com",
+    "selectors": {
+      "chapterList": {
+        "container": "ul.ChapterItems_list__kW9Em",
+        "item": "li",
+        "link": "a",
+        "number": "i.styles_num___sIei span",
+        "title": "strong.ells._3",
+        "href": "a",
+        "date": "small.db.fs12"
+      },
+      "chapterContent": {
+        "container": "main#content[data-type='western']",
+        "title": "h1.text-1\\.3em, h1",
+        "content": "main#content[data-type='western']"
+      }
+    },
+    "filters": {
+      "skipItems": ["Chapter 0", "Maps", "Character"],
+      "minChapterNumber": 1
+    },
+    "rateLimit": {
+      "requestsPerMinute": 30,
+      "delayBetweenRequests": 2000
+    }
+  }
+}

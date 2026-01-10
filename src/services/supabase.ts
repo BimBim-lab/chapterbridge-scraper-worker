@@ -20,7 +20,7 @@ export async function upsertWork(title: string): Promise<string> {
   const { data: existing } = await supabase
     .from('works')
     .select('id')
-    .eq('canonical_title', title)
+    .eq('title', title)
     .single();
 
   if (existing) {
@@ -30,7 +30,7 @@ export async function upsertWork(title: string): Promise<string> {
 
   const { data, error } = await supabase
     .from('works')
-    .insert({ canonical_title: title })
+    .insert({ title: title })
     .select('id')
     .single();
 
@@ -55,6 +55,7 @@ export async function upsertEdition(
     .from('editions')
     .select('id')
     .eq('work_id', workId)
+    .eq('media_type', media)
     .eq('provider', provider)
     .eq('canonical_url', canonicalUrl)
     .single();
@@ -68,7 +69,7 @@ export async function upsertEdition(
     .from('editions')
     .insert({
       work_id: workId,
-      media,
+      media_type: media,
       provider,
       canonical_url: canonicalUrl,
     })
@@ -135,10 +136,11 @@ export interface SegmentWithEdition {
   edition_id: string;
   number: number;
   segment_type: string;
+  title?: string;
   edition?: {
     id: string;
     work_id: string;
-    media: string;
+    media_type: string;
   };
 }
 
@@ -152,10 +154,11 @@ export async function getSegmentById(segmentId: string): Promise<SegmentWithEdit
       edition_id,
       number,
       segment_type,
+      title,
       edition:editions (
         id,
         work_id,
-        media
+        media_type
       )
     `)
     .eq('id', segmentId)
@@ -182,30 +185,60 @@ export async function insertAsset(
   assetType: string,
   bytes: number,
   sha256: string,
-  uploadSource: string
+  uploadSource: string,
+  contentType?: string,
+  sourceUrl?: string,
+  originalFilename?: string
 ): Promise<string> {
   const supabase = getSupabase();
 
-  const { data: existing } = await supabase
+  // First check by r2_key (unique identifier)
+  const { data: existingByKey } = await supabase
     .from('assets')
     .select('id')
-    .eq('sha256', sha256)
-    .single();
+    .eq('r2_key', r2Key)
+    .maybeSingle();
 
-  if (existing) {
-    logger.info({ assetId: existing.id, sha256 }, 'Asset with same hash already exists');
-    return existing.id;
+  if (existingByKey) {
+    logger.info({ assetId: existingByKey.id, r2Key }, 'Asset with same r2_key already exists');
+    return existingByKey.id;
   }
+
+  // Then check by sha256 (for deduplication info only)
+  const { data: existingByHash } = await supabase
+    .from('assets')
+    .select('id, r2_key')
+    .eq('sha256', sha256)
+    .maybeSingle();
+
+  if (existingByHash) {
+    logger.info({ assetId: existingByHash.id, sha256, existingKey: existingByHash.r2_key, newKey: r2Key }, 'Asset with same hash already exists, creating new record for different r2_key');
+    // Don't return - create new asset record with different r2_key
+  }
+
+  const insertData: Record<string, unknown> = {
+    provider: 'cloudflare_r2',
+    bucket: process.env.CLOUDFLARE_R2_BUCKET || 'chapterbridge-data',
+    r2_key: r2Key,
+    asset_type: assetType,
+    content_type: contentType || null,
+    bytes,
+    sha256,
+    upload_source: uploadSource,
+  };
+
+  // TODO: Add metadata column to assets table in Supabase
+  // For now, skip metadata to avoid errors
+  // if (sourceUrl) {
+  //   insertData.metadata = { source_url: sourceUrl };
+  // }
+  // if (originalFilename) {
+  //   insertData.metadata = { ...insertData.metadata as object, original_filename: originalFilename };
+  // }
 
   const { data, error } = await supabase
     .from('assets')
-    .insert({
-      r2_key: r2Key,
-      asset_type: assetType,
-      bytes,
-      sha256,
-      upload_source: uploadSource,
-    })
+    .insert(insertData)
     .select('id')
     .single();
 
@@ -222,35 +255,32 @@ export async function attachAssetToSegment(
   segmentId: string,
   assetId: string,
   role?: string
-): Promise<void> {
+): Promise<boolean> {
   const supabase = getSupabase();
 
-  const { data: existing } = await supabase
+  const { data, error } = await supabase
     .from('segment_assets')
-    .select('id')
-    .eq('segment_id', segmentId)
-    .eq('asset_id', assetId)
-    .single();
-
-  if (existing) {
-    logger.info({ segmentId, assetId }, 'Asset already attached to segment');
-    return;
-  }
-
-  const { error } = await supabase
-    .from('segment_assets')
-    .insert({
-      segment_id: segmentId,
-      asset_id: assetId,
-      role: role || 'page',
-    });
+    .upsert(
+      {
+        segment_id: segmentId,
+        asset_id: assetId,
+        role: role || 'page',
+      },
+      {
+        onConflict: 'segment_id,asset_id',
+        ignoreDuplicates: true,
+      }
+    )
+    .select()
+    .maybeSingle();
 
   if (error) {
     logger.error({ error, segmentId, assetId }, 'Failed to attach asset to segment');
-    throw new Error(`Failed to attach asset to segment: ${error.message}`);
+    return false;
   }
 
-  logger.info({ segmentId, assetId, role }, 'Attached asset to segment');
+  logger.info({ segmentId, assetId }, 'Attached asset to segment');
+  return true;
 }
 
 export async function createJob(
@@ -288,7 +318,6 @@ export async function updateJobStatus(
 
   const updateData: Record<string, unknown> = {
     status,
-    updated_at: new Date().toISOString(),
   };
 
   if (output) {
@@ -299,8 +328,12 @@ export async function updateJobStatus(
     updateData.error = errorMsg;
   }
 
+  if (status === 'running') {
+    updateData.started_at = new Date().toISOString();
+  }
+
   if (status === 'success' || status === 'failed') {
-    updateData.completed_at = new Date().toISOString();
+    updateData.finished_at = new Date().toISOString();
   }
 
   const { error } = await supabase
@@ -336,4 +369,128 @@ export async function getQueuedJobs(limit = 1): Promise<Array<{
   }
 
   return data || [];
+}
+
+// Additional helper functions for OpenSubtitles scraper
+
+export async function insertWork(title: string): Promise<string> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('works')
+    .insert({ title })
+    .select('id')
+    .single();
+
+  if (error) {
+    logger.error({ error, title }, 'Failed to insert work');
+    throw new Error(`Failed to insert work: ${error.message}`);
+  }
+
+  return data.id;
+}
+
+export async function getWorkById(workId: string): Promise<{ id: string; title: string } | null> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('works')
+    .select('id, title')
+    .eq('id', workId)
+    .single();
+
+  if (error) {
+    logger.error({ error, workId }, 'Failed to get work by id');
+    return null;
+  }
+
+  return data;
+}
+
+export async function insertEdition(params: {
+  workId: string;
+  mediaType: string;
+  provider: string;
+  canonicalUrl: string;
+  isOfficial: boolean;
+}): Promise<string> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('editions')
+    .insert({
+      work_id: params.workId,
+      media_type: params.mediaType,
+      provider: params.provider,
+      canonical_url: params.canonicalUrl,
+      is_official: params.isOfficial,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    logger.error({ error, params }, 'Failed to insert edition');
+    throw new Error(`Failed to insert edition: ${error.message}`);
+  }
+
+  return data.id;
+}
+
+export async function insertSegment(params: {
+  editionId: string;
+  segmentType: string;
+  number: number;
+  title: string;
+  canonicalUrl: string;
+}): Promise<string> {
+  const supabase = getSupabase();
+
+  // Check if segment already exists (untuk handle duplicate episodes)
+  const { data: existing } = await supabase
+    .from('segments')
+    .select('id')
+    .eq('edition_id', params.editionId)
+    .eq('segment_type', params.segmentType)
+    .eq('number', params.number)
+    .single();
+
+  if (existing) {
+    logger.info({ segmentId: existing.id, number: params.number }, 'Segment already exists, skipping');
+    return existing.id;
+  }
+
+  const { data, error } = await supabase
+    .from('segments')
+    .insert({
+      edition_id: params.editionId,
+      segment_type: params.segmentType,
+      number: params.number,
+      title: params.title,
+      canonical_url: params.canonicalUrl,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    // Handle duplicate key error gracefully
+    if (error.code === '23505') {
+      logger.warn({ params }, 'Duplicate segment detected, fetching existing');
+      const { data: existingAfterError } = await supabase
+        .from('segments')
+        .select('id')
+        .eq('edition_id', params.editionId)
+        .eq('segment_type', params.segmentType)
+        .eq('number', params.number)
+        .single();
+      
+      if (existingAfterError) {
+        return existingAfterError.id;
+      }
+    }
+    
+    logger.error({ error, params }, 'Failed to insert segment');
+    throw new Error(`Failed to insert segment: ${error.message}`);
+  }
+
+  return data.id;
 }

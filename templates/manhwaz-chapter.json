@@ -1,0 +1,16 @@
+{
+  "name": "manhwaz-chapter",
+  "description": "Template for extracting images from manhwaz.com chapter pages",
+  "selectors": {
+    "image": ".reading-content img, .page-break img, div.text-left img, img[src*='cdn.manhwaz.com']",
+    "textContainer": ".reading-content, .text-content"
+  },
+  "patterns": {
+    "imageUrlPattern": "\\.(jpg|jpeg|png|webp|gif)$"
+  },
+  "pagination": {
+    "nextPage": ".nav-next a, .nextpostslink",
+    "maxPages": 1
+  }
+}
+

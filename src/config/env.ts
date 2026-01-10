@@ -14,6 +14,9 @@ const envSchema = z.object({
   CLOUDFLARE_R2_PUBLIC_BASE_URL: z.string().url('CLOUDFLARE_R2_PUBLIC_BASE_URL must be a valid URL').optional(),
   USER_AGENT: z.string().default('Mozilla/5.0 (compatible; ChapterBridgeBot/1.0; +http://example.com/bot)'),
   DEFAULT_RATE_LIMIT_MS: z.coerce.number().default(500),
+  OPENSUBTITLES_API_KEY: z.string().optional(),
+  OPENSUBTITLES_USERNAME: z.string().optional(),
+  OPENSUBTITLES_PASSWORD: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

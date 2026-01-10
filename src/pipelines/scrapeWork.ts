@@ -3,6 +3,7 @@ import { join } from 'path';
 import { loadTemplate } from '../config/templates.js';
 import { GenericHtmlExtractor } from '../extractors/generic-html.js';
 import { WpMangaExtractor } from '../extractors/wp-manga.js';
+import { OpenSubtitlesExtractor } from '../extractors/opensubtitles.js';
 import type { ScrapeWorkOptions, Extractor } from '../extractors/types.js';
 import {
   upsertWork,
@@ -18,6 +19,9 @@ function getExtractor(templateName: string): Extractor {
   if (templateName === 'wp-manga') {
     return new WpMangaExtractor();
   }
+  if (templateName === 'opensubtitles') {
+    return new OpenSubtitlesExtractor();
+  }
   return new GenericHtmlExtractor();
 }
 
@@ -26,7 +30,7 @@ export async function scrapeWork(options: ScrapeWorkOptions): Promise<void> {
   let jobId: string | null = null;
 
   try {
-    jobId = await createJob('scrape:work', { url, media, provider, template, title });
+    jobId = await createJob('scrape', { url, media, provider, template, title });
     await updateJobStatus(jobId, 'running');
 
     logger.info({ url, media, provider, template, title }, 'Starting work scrape');

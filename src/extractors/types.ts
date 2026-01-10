@@ -6,6 +6,23 @@ export interface SegmentItem {
   url: string;
 }
 
+export interface ChapterInfo {
+  number: number;
+  title: string;
+  url: string;
+}
+
+export interface ExtractorResult {
+  success: boolean;
+  data?: {
+    title?: string;
+    contentHtml?: string;
+    plainText?: string;
+    wordCount?: number;
+  };
+  error?: string;
+}
+
 export interface WorkExtractResult {
   segments: SegmentItem[];
   metadata?: {
@@ -13,6 +30,7 @@ export interface WorkExtractResult {
     author?: string;
     description?: string;
     coverUrl?: string;
+    seasonMap?: string; // JSON string of URL to season number mapping
   };
 }
 

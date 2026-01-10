@@ -86,16 +86,30 @@ export async function listR2Objects(prefix: string): Promise<string[]> {
   const env = getEnv();
   const client = getR2Client();
 
-  const command = new ListObjectsV2Command({
-    Bucket: env.CLOUDFLARE_R2_BUCKET,
-    Prefix: prefix,
-  });
+  const allKeys: string[] = [];
+  let continuationToken: string | undefined;
 
   try {
-    const response = await client.send(command);
-    const keys = (response.Contents || []).map((obj) => obj.Key!).filter(Boolean);
-    logger.info({ prefix, count: keys.length }, 'Listed R2 objects');
-    return keys;
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: env.CLOUDFLARE_R2_BUCKET,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      });
+
+      const response = await client.send(command);
+      const keys = (response.Contents || []).map((obj) => obj.Key!).filter(Boolean);
+      allKeys.push(...keys);
+
+      continuationToken = response.NextContinuationToken;
+      
+      if (continuationToken) {
+        logger.debug({ prefix, currentCount: allKeys.length }, 'Fetching next page of R2 objects');
+      }
+    } while (continuationToken);
+
+    logger.info({ prefix, count: allKeys.length }, 'Listed all R2 objects');
+    return allKeys;
   } catch (error) {
     logger.error({ error, prefix }, 'Failed to list R2 objects');
     throw new Error(`Failed to list R2 objects: ${error}`);
