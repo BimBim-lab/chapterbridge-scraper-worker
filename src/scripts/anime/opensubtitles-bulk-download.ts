@@ -1,5 +1,5 @@
 import { parseArgs } from 'util';
-import { getOpenSubtitlesApi } from '../services/opensubtitles-api.js';
+import { getOpenSubtitlesApi } from '../../services/opensubtitles-api.js';
 import { 
   getSegmentById,
   getSupabase,
@@ -8,11 +8,11 @@ import {
   createJob,
   updateJobStatus,
   type CreateJobParams,
-} from '../services/supabase.js';
-import { uploadToR2, buildR2Key } from '../services/r2.js';
-import { computeFileHash } from '../utils/hash.js';
-import { logger } from '../utils/logger.js';
-import { getEnv } from '../config/env.js';
+} from '../../services/supabase.js';
+import { uploadToR2, buildR2Key } from '../../services/r2.js';
+import { computeFileHash } from '../../utils/hash.js';
+import { logger } from '../../utils/logger.js';
+import { getEnv } from '../../config/env.js';
 import dns from 'dns';
 
 // Force DNS to use IPv4 first (helps with WARP compatibility)

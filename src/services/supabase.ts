@@ -283,28 +283,56 @@ export async function attachAssetToSegment(
   return true;
 }
 
+export interface CreateJobParams {
+  jobType: 'scrape' | 'clean' | 'summarize' | 'entities' | 'embed' | 'match' | 'sync_assets';
+  input: Record<string, unknown>;
+  sourceId?: string;
+  workId?: string;
+  editionId?: string;
+  segmentId?: string;
+}
+
 export async function createJob(
-  jobType: string,
-  input: Record<string, unknown>
+  params: CreateJobParams | string,
+  input?: Record<string, unknown>
 ): Promise<string> {
   const supabase = getSupabase();
 
+  // Support legacy signature: createJob(jobType, input)
+  let insertData: Record<string, unknown>;
+  if (typeof params === 'string') {
+    insertData = {
+      job_type: params,
+      input: input || {},
+      status: 'queued',
+      attempt: 0,
+    };
+  } else {
+    insertData = {
+      job_type: params.jobType,
+      input: params.input,
+      status: 'queued',
+      attempt: 0,
+    };
+    
+    if (params.sourceId) insertData.source_id = params.sourceId;
+    if (params.workId) insertData.work_id = params.workId;
+    if (params.editionId) insertData.edition_id = params.editionId;
+    if (params.segmentId) insertData.segment_id = params.segmentId;
+  }
+
   const { data, error } = await supabase
     .from('pipeline_jobs')
-    .insert({
-      job_type: jobType,
-      input,
-      status: 'queued',
-    })
+    .insert(insertData)
     .select('id')
     .single();
 
   if (error) {
-    logger.error({ error, jobType }, 'Failed to create job');
+    logger.error({ error, jobType: insertData.job_type }, 'Failed to create job');
     throw new Error(`Failed to create job: ${error.message}`);
   }
 
-  logger.info({ jobId: data.id, jobType }, 'Created new job');
+  logger.info({ jobId: data.id, jobType: insertData.job_type }, 'Created new job');
   return data.id;
 }
 
@@ -315,6 +343,18 @@ export async function updateJobStatus(
   errorMsg?: string
 ): Promise<void> {
   const supabase = getSupabase();
+
+  // Get current attempt count if setting to running
+  let currentAttempt = 0;
+  if (status === 'running') {
+    const { data: currentJob } = await supabase
+      .from('pipeline_jobs')
+      .select('attempt')
+      .eq('id', jobId)
+      .single();
+    
+    currentAttempt = currentJob?.attempt || 0;
+  }
 
   const updateData: Record<string, unknown> = {
     status,
@@ -330,6 +370,7 @@ export async function updateJobStatus(
 
   if (status === 'running') {
     updateData.started_at = new Date().toISOString();
+    updateData.attempt = currentAttempt + 1;
   }
 
   if (status === 'success' || status === 'failed') {
@@ -346,7 +387,7 @@ export async function updateJobStatus(
     throw new Error(`Failed to update job status: ${error.message}`);
   }
 
-  logger.info({ jobId, status }, 'Updated job status');
+  logger.info({ jobId, status, attempt: status === 'running' ? currentAttempt + 1 : undefined }, 'Updated job status');
 }
 
 export async function getQueuedJobs(limit = 1): Promise<Array<{

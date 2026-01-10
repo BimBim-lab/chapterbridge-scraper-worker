@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { getEnv } from '../config/env.js';
-import { logger } from '../utils/logger.js';
+import { getEnv } from '../../config/env.js';
+import { logger } from '../../utils/logger.js';
 
 const env = getEnv();
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);

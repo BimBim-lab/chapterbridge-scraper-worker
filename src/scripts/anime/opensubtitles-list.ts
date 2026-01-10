@@ -1,7 +1,7 @@
 import { parseArgs } from 'util';
-import { OpenSubtitlesExtractor } from '../extractors/opensubtitles.js';
-import { loadTemplate } from '../config/templates.js';
-import { logger } from '../utils/logger.js';
+import { OpenSubtitlesExtractor } from '../../extractors/opensubtitles.js';
+import { loadTemplate } from '../../config/templates.js';
+import { logger } from '../../utils/logger.js';
 import {
   insertWork,
   insertEdition,
@@ -10,7 +10,7 @@ import {
   createJob,
   updateJobStatus,
   type CreateJobParams,
-} from '../services/supabase.js';
+} from '../../services/supabase.js';
 
 interface Args {
   url: string;

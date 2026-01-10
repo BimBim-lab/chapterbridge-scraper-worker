@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { getEnv } from '../config/env.js';
+import { getEnv } from '../../config/env.js';
 import { execSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -19,7 +19,7 @@ async function bulkScrapeSegments() {
   const templateIndex = args.indexOf('--template');
   
   let editionId: string;
-  let template = 'manhwaz-chapter'; // default
+  let template = 'komik-manhwaz-page'; // default
   
   if (templateIndex !== -1 && args[templateIndex + 1]) {
     template = args[templateIndex + 1];

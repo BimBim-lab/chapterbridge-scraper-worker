@@ -229,18 +229,47 @@ scraper-worker/
 │   ├── extractors/
 │   │   ├── types.ts        # TypeScript interfaces
 │   │   ├── generic-html.ts # Generic HTML extractor
+│   │   ├── chereads.ts     # Chereads specific extractor
+│   │   ├── opensubtitles.ts # OpenSubtitles specific extractor
 │   │   └── wp-manga.ts     # WP-Manga specific extractor
 │   ├── services/
 │   │   ├── supabase.ts     # Supabase operations
-│   │   └── r2.ts           # Cloudflare R2 operations
+│   │   ├── r2.ts           # Cloudflare R2 operations
+│   │   └── opensubtitles-api.ts # OpenSubtitles API client
 │   ├── pipelines/
 │   │   ├── scrapeWork.ts   # Work scraping pipeline
 │   │   ├── scrapeSegment.ts # Segment scraping pipeline
 │   │   └── jobRunner.ts    # Job queue processor
+│   ├── scripts/            # 🆕 Organized by media type
+│   │   ├── novel/          # Novel/web novel scrapers
+│   │   │   ├── chereads-list.ts
+│   │   │   ├── chereads-content.ts
+│   │   │   ├── readnovel-list.ts
+│   │   │   └── readnovel-content.ts
+│   │   ├── anime/          # Anime subtitle scrapers
+│   │   │   ├── opensubtitles-list.ts
+│   │   │   ├── opensubtitles-bulk-download.ts
+│   │   │   └── opensubtitles-single-download.ts
+│   │   ├── komik/          # Manhwa/comic scrapers
+│   │   │   └── manhwaz-bulk-scrape.ts
+│   │   └── utils/          # Utility scripts
+│   │       ├── sync-r2.ts
+│   │       └── fix-content-types.ts
 │   └── utils/
 │       ├── hash.ts         # SHA256 & file size utilities
 │       └── logger.ts       # Pino logger configuration
 ├── templates/              # Extractor templates
+│   ├── chereads.json
+│   ├── komik-manhwaz-list.json
+│   ├── komik-manhwaz-page.json
+│   ├── opensubtitles.json
+│   ├── readnovel.json
+│   ├── sample.json
+│   └── wp-manga.json
+├── docs/                   # Documentation
+│   ├── ARCHITECTURE.md     # System architecture
+│   ├── MIGRATION_GUIDE.md  # File reorganization guide
+│   └── database-schema.sql # Database schema
 ├── out/                    # Local output directory
 └── .env                    # Environment configuration
 ```

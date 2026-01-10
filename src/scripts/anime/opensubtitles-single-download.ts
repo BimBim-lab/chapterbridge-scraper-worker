@@ -1,16 +1,16 @@
 import { parseArgs } from 'util';
-import { getOpenSubtitlesApi } from '../services/opensubtitles-api.js';
+import { getOpenSubtitlesApi } from '../../services/opensubtitles-api.js';
 import { 
   getSegmentById, 
   insertAsset, 
   attachAssetToSegment,
   createJob,
   updateJobStatus,
-} from '../services/supabase.js';
-import { uploadToR2, buildR2Key } from '../services/r2.js';
-import { computeFileHash } from '../utils/hash.js';
-import { logger } from '../utils/logger.js';
-import { getEnv } from '../config/env.js';
+} from '../../services/supabase.js';
+import { uploadToR2, buildR2Key } from '../../services/r2.js';
+import { computeFileHash } from '../../utils/hash.js';
+import { logger } from '../../utils/logger.js';
+import { getEnv } from '../../config/env.js';
 
 interface Args {
   segmentId: string;

@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-import { getEnv } from '../config/env.js';
-import { listR2Objects, downloadFromR2 } from '../services/r2.js';
-import { insertAsset, attachAssetToSegment, upsertSegment } from '../services/supabase.js';
-import { computeSha256 } from '../utils/hash.js';
-import { logger } from '../utils/logger.js';
+import { getEnv } from '../../config/env.js';
+import { listR2Objects, downloadFromR2 } from '../../services/r2.js';
+import { insertAsset, attachAssetToSegment, upsertSegment } from '../../services/supabase.js';
+import { computeSha256 } from '../../utils/hash.js';
+import { logger } from '../../utils/logger.js';
 
 const env = getEnv();
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);

@@ -1,16 +1,16 @@
 import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
-import { getEnv } from '../config/env.js';
-import { ChereadsExtractor } from '../extractors/chereads.js';
-import { uploadToR2 } from '../services/r2.js';
-import { computeSha256 } from '../utils/hash.js';
+import { getEnv } from '../../config/env.js';
+import { ChereadsExtractor } from '../../extractors/chereads.js';
+import { uploadToR2 } from '../../services/r2.js';
+import { computeSha256 } from '../../utils/hash.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { 
   createJob, 
   updateJobStatus,
   type CreateJobParams 
-} from '../services/supabase.js';
+} from '../../services/supabase.js';
 
 const env = getEnv();
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);

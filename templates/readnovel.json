@@ -1,0 +1,26 @@
+{
+  "config": {
+    "baseUrl": "https://readnovel.eu",
+    "selectors": {
+      "chapterList": {
+        "chaptersTab": "h4.mantine-Text-root.mantine-Title-root.mantine-18c3y1m:has-text('Chapters')",
+        "container": "div",
+        "item": "div.mantine-Group-root.mantine-1dna2lx",
+        "link": "a[href^='/chapter/']",
+        "title": "h4.mantine-Text-root.mantine-Title-root.mantine-1is1fec",
+        "href": "href",
+        "date": "div.mantine-Text-root.mantine-ss2azu",
+        "paginationButton": "button.mantine-UnstyledButton-root.mantine-Pagination-control.mantine-s1y2qe",
+        "activePage": "button.mantine-UnstyledButton-root.mantine-Pagination-control[data-active='true']"
+      },
+      "chapterContent": {
+        "container": "div[class*='chapter-content'], div[class*='content'], article, main",
+        "title": "h1, h2, h3, .chapter-title, .title",
+        "content": "div[class*='chapter-content'], div[class*='content'], article, main"
+      }
+    },
+    "filters": {
+      "minChapterNumber": 1
+    }
+  }
+}

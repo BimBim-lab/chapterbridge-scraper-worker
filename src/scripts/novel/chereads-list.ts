@@ -1,15 +1,15 @@
 import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
-import { getEnv } from '../config/env.js';
-import { ChereadsExtractor } from '../extractors/chereads.js';
-import type { ChapterInfo } from '../extractors/types.js';
+import { getEnv } from '../../config/env.js';
+import { ChereadsExtractor } from '../../extractors/chereads.js';
+import type { ChapterInfo } from '../../extractors/types.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { 
   createJob, 
   updateJobStatus,
   type CreateJobParams 
-} from '../services/supabase.js';
+} from '../../services/supabase.js';
 
 const env = getEnv();
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
